@@ -10,7 +10,7 @@
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:center;align-items:center;font-family:Helvetica,Arial,sans-serif;transition:background .3s}
         
-        /* ===== 完全保留原有配色，一字未改 ===== */
+        /* ===== 完全保留原有配色 ===== */
         .theme0{background:#FFCC99}
         .theme1{background:#222}
         .theme1 .digit{background:#333}
@@ -26,17 +26,17 @@
         .theme3 .num{color:#192841}
         .theme3 .colon{color:#fff}
         
-        /* 时钟容器 - 放大间距 */
-        .clock{display:flex;align-items:center;gap:clamp(16px, 5vw, 50px);}
-        .digit-group{display:flex;gap:clamp(10px, 3vw, 35px);}
+        /* 时钟容器 - iPad 4代 适配 */
+        .clock{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:nowrap;padding:0 16px;}
+        .digit-group{display:flex;gap:6px;}
         
-        /* 数字卡片 - 放大尺寸 (原130x200 → iPad大尺寸) */
+        /* 数字卡片 - iPad 4代 适中尺寸 (1536宽屏下刚好) */
         .digit{
-            width:clamp(130px, 14vw, 210px);
-            height:clamp(200px, 21vw, 330px);
+            width:85px;
+            height:130px;
             background:#fff;
-            border-radius:10px;
-            margin:0 4px;
+            border-radius:8px;
+            margin:0 2px;
             position:relative;
             overflow:hidden;
             box-shadow:0 3px 8px rgba(0,0,0,0.2);
@@ -53,96 +53,107 @@
             z-index:2;
             transition:background .3s
         }
-        /* 数字字体 - 大幅放大 */
         .num{
             width:100%;
             height:100%;
             display:flex;
             justify-content:center;
             align-items:center;
-            font-size:clamp(140px, 16vw, 240px);
+            font-size:92px;
             color:#333;
-            transition:transform .3s ease,color .3s
+            transition:transform .3s ease,color .3s;
+            font-weight:500;
         }
-        /* 冒号放大 */
         .colon{
-            font-size:clamp(150px, 17vw, 250px);
+            font-size:100px;
             color:#333;
-            margin:0 clamp(8px, 2vw, 20px);
+            margin:0 2px;
             display:inline-block;
-            transition:color .3s
+            transition:color .3s;
+            line-height:1;
         }
         
-        /* 按钮放大 */
+        /* 按钮 */
         .btn{
             position:fixed;
-            bottom:40px;
-            padding:14px 32px;
-            border:none;
-            border-radius:40px;
-            background:#333;
-            color:#fff;
-            font-size:20px;
-            cursor:pointer;
+            bottom:25px;
             left:50%;
             transform:translateX(-50%);
+            padding:10px 28px;
+            border:none;
+            border-radius:30px;
+            background:#333;
+            color:#fff;
+            font-size:16px;
+            cursor:pointer;
             z-index:100;
             font-weight:500;
         }
         .btn:active{opacity:.8}
         
-        /* ========== 天气卡片 (新增，配色完全兼容原主题风格) ========== */
+        /* ========== 天气卡片 ========== */
         .weather-card {
             position: fixed;
-            top: 24px;
-            right: 24px;
+            top: 16px;
+            right: 16px;
             z-index: 25;
-            border-radius: 32px;
-            padding: 12px 20px;
+            border-radius: 24px;
+            padding: 10px 16px;
             font-family: Helvetica, Arial, sans-serif;
             transition: all 0.2s ease;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-            min-width: 230px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 200px;
             text-align: right;
         }
-        /* 各主题天气卡片背景色 - 与原配色协调 */
-        .theme0 .weather-card { background: rgba(245, 215, 170, 0.9); border: 1px solid rgba(100,70,30,0.25); color: #4a2c10; }
-        .theme1 .weather-card { background: rgba(35, 35, 45, 0.88); border: 1px solid rgba(255,255,255,0.2); color: #f0f0f0; }
-        .theme2 .weather-card { background: rgba(235, 235, 240, 0.9); border: 1px solid rgba(0,0,0,0.1); color: #1e1e2a; }
-        .theme3 .weather-card { background: rgba(20, 35, 55, 0.9); border: 1px solid rgba(255,255,255,0.2); color: #eef4ff; }
+        .theme0 .weather-card { background: rgba(245, 215, 170, 0.92); border: 1px solid rgba(100,70,30,0.25); color: #4a2c10; }
+        .theme1 .weather-card { background: rgba(35, 35, 45, 0.9); border: 1px solid rgba(255,255,255,0.2); color: #f0f0f0; }
+        .theme2 .weather-card { background: rgba(235, 235, 240, 0.92); border: 1px solid rgba(0,0,0,0.1); color: #1e1e2a; }
+        .theme3 .weather-card { background: rgba(20, 35, 55, 0.92); border: 1px solid rgba(255,255,255,0.2); color: #eef4ff; }
         
-        .weather-now { display: flex; align-items: center; justify-content: flex-end; gap: 18px; margin-bottom: 10px; flex-wrap: wrap; }
-        .weather-icon-temp { display: flex; align-items: baseline; gap: 6px; }
-        .weather-icon { font-size: 42px; line-height: 1; }
-        .temp-unit { font-size: 36px; font-weight: 600; letter-spacing: -0.5px; }
-        .weather-meta { display: flex; gap: 16px; font-size: 15px; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 40px; font-weight: 500; }
-        .weather-meta span { display: inline-flex; align-items: center; gap: 5px; }
-        .forecast-group { display: flex; gap: 16px; justify-content: flex-end; margin-top: 8px; }
-        .forecast-day-card { text-align: center; min-width: 72px; background: rgba(255,255,255,0.12); border-radius: 28px; padding: 6px 8px; }
-        .forecast-week { font-size: 14px; font-weight: 600; }
-        .forecast-emoji { font-size: 26px; margin: 4px 0 2px; }
-        .forecast-range { font-size: 13px; font-weight: 500; opacity: 0.9; }
+        .weather-now { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+        .weather-icon-temp { display: flex; align-items: baseline; gap: 5px; }
+        .weather-icon { font-size: 32px; line-height: 1; }
+        .temp-unit { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+        .weather-meta { display: flex; gap: 12px; font-size: 12px; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 30px; font-weight: 500; }
+        .weather-meta span { display: inline-flex; align-items: center; gap: 4px; }
+        .forecast-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+        .forecast-day-card { text-align: center; min-width: 60px; background: rgba(255,255,255,0.12); border-radius: 20px; padding: 5px 6px; }
+        .forecast-week { font-size: 11px; font-weight: 600; }
+        .forecast-emoji { font-size: 22px; margin: 2px 0; }
+        .forecast-range { font-size: 11px; font-weight: 500; opacity: 0.9; white-space: nowrap; }
         
-        /* iPad大屏适配 - 进一步放大 */
-        @media (min-width: 1024px) {
-            .digit { width: 180px; height: 280px; }
-            .num { font-size: 210px; }
-            .colon { font-size: 220px; margin: 0 15px; }
-            .clock { gap: 30px; }
-            .digit-group { gap: 25px; }
-            .weather-card { top: 32px; right: 32px; padding: 16px 24px; min-width: 300px; }
-            .weather-icon { font-size: 52px; }
-            .temp-unit { font-size: 44px; }
-            .weather-meta { font-size: 17px; gap: 20px; }
-            .forecast-day-card { min-width: 85px; }
-            .forecast-week { font-size: 16px; }
-            .forecast-emoji { font-size: 32px; }
-            .forecast-range { font-size: 14px; }
-            .btn { bottom: 50px; padding: 16px 40px; font-size: 22px; }
+        /* iPad 4代 横屏优化 (2048宽) */
+        @media (min-width: 2000px) and (orientation: landscape) {
+            .digit { width: 110px; height: 170px; }
+            .num { font-size: 120px; }
+            .colon { font-size: 130px; margin: 0 6px; }
+            .clock { gap: 18px; }
+            .digit-group { gap: 10px; }
+            .weather-card { top: 24px; right: 24px; padding: 12px 20px; min-width: 260px; }
+            .weather-icon { font-size: 40px; }
+            .temp-unit { font-size: 36px; }
+            .weather-meta { font-size: 14px; gap: 16px; }
+            .forecast-day-card { min-width: 75px; }
+            .forecast-week { font-size: 13px; }
+            .forecast-emoji { font-size: 28px; }
+            .forecast-range { font-size: 12px; }
+            .btn { bottom: 35px; padding: 12px 35px; font-size: 18px; }
         }
         
-        @media (max-width: 680px) {
+        /* iPad 4代 竖屏优化 (1536宽) - 默认尺寸已适配，稍微微调 */
+        @media (max-width: 1600px) and (orientation: portrait) {
+            .digit { width: 80px; height: 122px; }
+            .num { font-size: 86px; }
+            .colon { font-size: 94px; }
+            .weather-card { transform: scale(0.95); transform-origin: top right; }
+        }
+        
+        /* 小屏手机隐藏天气卡片，确保时钟居中 */
+        @media (max-width: 600px) {
             .weather-card { display: none; }
+            .digit { width: 60px; height: 95px; }
+            .num { font-size: 65px; }
+            .colon { font-size: 70px; }
         }
     </style>
 </head>
