@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>翻页时钟 · 捣蛋小人 · 上海天气</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* 避免拖动干扰动画 */
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            transition: background 0.3s ease;
+        }
+
+        /* 主题配色 */
+        .theme0 { background: #FFCC99; }  /* 暖杏色 */
+        .theme1 { background: #222222; }
+        .theme2 { background: #f5f5f5; }
+        .theme3 { background: #192841; }
+
+        /* 时钟容器 - 相对定位，便于小人绝对定位捣蛋 */
+        .clock-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 20px;
+        }
+
+        .clock {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 5;
+        }
+
+        .digit-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .digit {
+            width: 130px;
+            height: 200px;
+            background: #fff;
+            border-radius: 10px;
+            margin: 0 4px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s;
+        }
+
+        .digit::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(0,0,0,0.1);
+            z-index: 2;
+            transition: background 0.3s;
+        }
+
+        .num {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 140px;
+            font-weight: 600;
+            color: #333;
+            transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1), color 0.3s;
+            backface-visibility: hidden;
+        }
+
+        .colon {
+            font-size: 150px;
+            font-weight: 300;
+            margin: 0 8px;
+            display: inline-block;
+            transition: color 0.3s;
+        }
+
+        /* 主题适配数字冒号颜色 */
+        .theme1 .digit { background: #333; }
+        .theme1 .num { color: #eee; }
+        .theme1 .colon { color: #eee; }
+        .theme1 .digit::before { background: #555; }
+
+        .theme2 .digit { background: #111; }
+        .theme2 .num { color: #fff; }
+        .theme2 .colon { color: #111; }
+        .theme2 .digit::before { background: #2a2a2a; }
+
+        .theme3 .digit { background: #fff; }
+        .theme3 .num { color: #192841; }
+        .theme3 .colon { color: #fff; }
+        .theme3 .digit::before { background: #cbd5e6; }
+
+        /* 按钮 */
+        .btn {
+            position: fixed;
+            bottom: 30px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 40px;
+            background: #1e2a3a;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 30;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+        }
+        .btn:active { transform: scale(0.96); opacity: 0.9; }
+        .btn:hover { background: #2c3e4e; }
+
+        /* 天气卡片 - 精致毛玻璃 */
+        .weather-card {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 25;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(14px);
+            border-radius: 32px;
+            padding: 12px 20px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            min-width: 230px;
+            text-align: right;
+        }
+
+        .theme0 .weather-card {
+            background: rgba(245, 215, 170, 0.75);
+            border-color: rgba(100, 70, 30, 0.3);
+            color: #4a2c10;
+        }
+        .theme1 .weather-card {
+            background: rgba(35, 35, 45, 0.85);
+            color: #f0f0f0;
+        }
+        .theme2 .weather-card {
+            background: rgba(235, 235, 240, 0.8);
+            color: #1e1e2a;
+        }
+        .theme3 .weather-card {
+            background: rgba(20, 35, 55, 0.85);
+            color: #eef4ff;
+        }
+
+        .weather-now {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .weather-icon-temp {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        .weather-icon { font-size: 38px; line-height: 1; }
+        .temp-unit { font-size: 32px; font-weight: 600; letter-spacing: -1px; }
+        .weather-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+        .forecast-group {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+        .forecast-day-card {
+            text-align: center;
+            min-width: 68px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 28px;
+            padding: 6px 8px;
+            backdrop-filter: blur(4px);
+        }
+        .forecast-week { font-size: 13px; font-weight: 600; }
+        .forecast-emoji { font-size: 24px; margin: 4px 0 2px; }
+        .forecast-range { font-size: 12px; font-weight: 500; opacity: 0.9; }
+
+        @media (max-width: 1024px) {
+            .weather-card { top: 16px; right: 16px; padding: 10px 16px; min-width: 200px; }
+            .forecast-group { gap: 12px; }
+            .forecast-day-card { min-width: 58px; }
+        }
+        @media (max-width: 780px) {
+            .weather-card { top: 12px; right: 12px; padding: 8px 14px; min-width: 180px; }
+            .weather-icon { font-size: 28px; }
+            .temp-unit { font-size: 26px; }
+            .forecast-group { gap: 8px; }
+        }
+        @media (max-width: 640px) {
+            .weather-card { display: none; }
+            .digit { width: 85px; height: 130px; }
+            .num { font-size: 90px; }
+            .colon { font-size: 100px; margin: 0 4px; }
+            .clock { gap: 8px; }
+            .digit-group { gap: 6px; }
+        }
+
+        /* ========= 捣蛋小人画布 ========= */
+        .trouble-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;  /* 让小人只做视觉捣蛋，不干扰点击 */
+            z-index: 20;
+        }
+
+        /* 让小人活跃区域的容器确保画布覆盖时钟区域 */
+        .clock-container {
+            position: relative;
+        }
+        /* 小人的基础svg动画样式 */
+        .trouble-svg {
+            position: absolute;
+            bottom: -30px;
+            right: -40px;
+            width: 160px;
+            height: 160px;
+            filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.2));
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+
+        /* 不同场景移动位置 */
+        .trouble-svg.move-left {
+            transform: translateX(-60px) translateY(-20px) rotate(-5deg);
+        }
+        .trouble-svg.move-right {
+            transform: translateX(40px) translateY(-10px) rotate(3deg);
+        }
+        .trouble-svg.climb-top {
+            transform: translateY(-110px) translateX(-20px) rotate(2deg);
+        }
+
+        /* 响应式调整捣蛋鬼大小 */
+        @media (max-width: 780px) {
+            .trouble-svg { width: 110px; height: 110px; bottom: -20px; right: -20px; }
+            .trouble-svg.climb-top { transform: translateY(-80px) translateX(-10px); }
+        }
+    </style>
+</head>
+<body class="theme0">
+    <div class="clock-container" id="clockContainer">
+        <div class="clock">
+            <div class="digit-group">
+                <div class="digit"><div class="num" id="h1">0</div></div>
+                <div class="digit"><div class="num" id="h2">0</div></div>
+            </div>
+            <span class="colon">:</span>
+            <div class="digit-group">
+                <div class="digit"><div class="num" id="m1">0</div></div>
+                <div class="digit"><div class="num" id="m2">0</div></div>
+            </div>
+            <span class="colon">:</span>
+            <div class="digit-group">
+                <div class="digit"><div class="num" id="s1">0</div></div>
+                <div class="digit"><div class="num" id="s2">0</div></div>
+            </div>
+        </div>
+        <!-- 捣蛋小人 SVG 画布容器 -->
+        <canvas id="troubleCanvas" class="trouble-canvas" width="800" height="400" style="display: none;"></canvas>
+        <div id="troubleSvgWrapper" style="position: absolute; bottom: 0; right: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible;">
+            <!-- 动态线条小人会以 SVG 形式注入此处 -->
+        </div>
+    </div>
+    <button class="btn" id="themeBtn">🎨 切换配色</button>
+
+    <div class="weather-card" id="weatherCard">
+        <div class="weather-now">
+            <div class="weather-icon-temp">
+                <span class="weather-icon" id="weatherIcon">☀️</span>
+                <span class="temp-unit" id="weatherTemp">--°</span>
+            </div>
+            <div class="weather-meta">
+                <span id="weatherHumidity">💧 --%</span>
+                <span id="weatherAqi">🌱 优</span>
+            </div>
+        </div>
+        <div class="forecast-group" id="forecastGroup">
+            <div class="forecast-day-card">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // ======================= 1. 翻页时钟核心 (保留原有效果+增加动画健壮性) =======================
+        const themes = ["theme0","theme1","theme2","theme3"];
+        let curTheme = 0;
+        const btn = document.getElementById("themeBtn");
+        btn.onclick = () => {
+            curTheme = (curTheme + 1) % themes.length;
+            document.body.className = themes[curTheme];
+            // 让捣蛋小人也有主题小呼应 (可以给小人线条加边框色调，可选，保留原来的线条颜色即可)
+            updateTroubleThemeHint();
+        };
+        function pad(n) { return n < 10 ? "0" + n : "" + n; }
+        function flip(el, newVal) {
+            if (el.textContent === newVal) return;
+            el.style.transform = "rotateX(-90deg)";
+            setTimeout(() => {
+                el.textContent = newVal;
+                el.style.transform = "rotateX(0deg)";
+            }, 130);
+        }
+        
+        function updateClock() {
+            const d = new Date();
+            const h = pad(d.getHours()), m = pad(d.getMinutes()), s = pad(d.getSeconds());
+            flip(document.getElementById("h1"), h[0]);
+            flip(document.getElementById("h2"), h[1]);
+            flip(document.getElementById("m1"), m[0]);
+            flip(document.getElementById("m2"), m[1]);
+            flip(document.getElementById("s1"), s[0]);
+            flip(document.getElementById("s2"), s[1]);
+        }
+        
+        updateClock();
+        const clockInterval = setInterval(updateClock, 1000);
+        // 整点校准时钟显示 (避免误差)
+        setInterval(() => {
+            const now = new Date();
+            const hh = pad(now.getHours()), mm = pad(now.getMinutes()), ss = pad(now.getSeconds());
+            const ids = ["h1","h2","m1","m2","s1","s2"];
+            const newVals = [hh[0], hh[1], mm[0], mm[1], ss[0], ss[1]];
+            ids.forEach((id, idx) => {
+                const el = document.getElementById(id);
+                if (el && el.textContent !== newVals[idx]) {
+                    el.textContent = newVals[idx];
+                    el.style.transform = "rotateX(0deg)";
+                }
+            });
+        }, 3600000);
+        
+        // ======================= 2. 天气模块 (Open-Meteo API 上海) =======================
+        const weatherIconEl = document.getElementById("weatherIcon");
+        const weatherTempEl = document.getElementById("weatherTemp");
+        const weatherHumidityEl = document.getElementById("weatherHumidity");
+        const weatherAqiEl = document.getElementById("weatherAqi");
+        const forecastGroup = document.getElementById("forecastGroup");
+        
+        function wmoToEmoji(code) {
+            const map = {
+                0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
+                51: "🌦️", 53: "🌧️", 55: "🌧️", 56: "🌧️", 57: "🌧️",
+                61: "🌧️", 63: "🌧️", 65: "🌧️", 66: "🌧️", 67: "🌧️",
+                71: "❄️", 73: "❄️", 75: "❄️", 77: "❄️", 80: "🌦️",
+                81: "🌧️", 82: "🌧️", 85: "🌨️", 86: "❄️", 95: "⛈️",
+                96: "⛈️", 99: "⛈️"
+            };
+            return map[code] || "🌡️";
+        }
+        function getAqiInfo(aqi) {
+            if (aqi <= 50) return { icon: "🌱", text: "优" };
+            if (aqi <= 100) return { icon: "🌤️", text: "良" };
+            if (aqi <= 150) return { icon: "⚠️", text: "轻度" };
+            if (aqi <= 200) return { icon: "⚡", text: "中度" };
+            if (aqi <= 300) return { icon: "🚨", text: "重度" };
+            return { icon: "💀", text: "严重" };
+        }
+        function getWeekdayShortFromOffset(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+            return weekdays[d.getDay()];
+        }
+        
+        async function fetchShanghaiWeather() {
+            try {
+                const forecastUrl = "https://api.open-meteo.com/v1/forecast?latitude=31.2304&longitude=121.4737&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&current_weather=true&timezone=Asia/Shanghai&forecast_days=5";
+                const response = await fetch(forecastUrl);
+                if (!response.ok) throw new Error("weather api fail");
+                const data = await response.json();
+                const current = data.current_weather;
+                const temperature = current.temperature;
+                const weatherCode = current.weathercode;
+                weatherIconEl.innerText = wmoToEmoji(weatherCode);
+                weatherTempEl.innerText = `${Math.round(temperature)}°`;
+                if (data.daily && data.daily.relative_humidity_2m_max && data.daily.relative_humidity_2m_max.length > 0) {
+                    weatherHumidityEl.innerHTML = `💧 ${data.daily.relative_humidity_2m_max[0]}%`;
+                } else {
+                    weatherHumidityEl.innerHTML = `💧 --%`;
+                }
+                // AQI
+                try {
+                    const aqiUrl = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=31.2304&longitude=121.4737&current=european_aqi&timezone=Asia/Shanghai";
+                    const aqiResp = await fetch(aqiUrl);
+                    if (aqiResp.ok) {
+                        const aqiData = await aqiResp.json();
+                        if (aqiData.current && aqiData.current.european_aqi !== undefined) {
+                            const aqiValue = aqiData.current.european_aqi;
+                            const { icon, text } = getAqiInfo(aqiValue);
+                            weatherAqiEl.innerHTML = `${icon} ${text}`;
+                        } else { weatherAqiEl.innerHTML = `🌤️ 良`; }
+                    } else { weatherAqiEl.innerHTML = `🌤️ 良`; }
+                } catch(e) { weatherAqiEl.innerHTML = `🌤️ 良`; }
+                
+                const daily = data.daily;
+                if (daily && daily.time && daily.time.length >= 4) {
+                    let forecastHtml = "";
+                    for (let i = 1; i <= 3; i++) {
+                        if (i >= daily.time.length) break;
+                        const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                        const minTemp = Math.round(daily.temperature_2m_min[i]);
+                        const emoji = wmoToEmoji(daily.weather_code[i]);
+                        const weekName = getWeekdayShortFromOffset(i);
+                        forecastHtml += `
+                            <div class="forecast-day-card">
+                                <div class="forecast-week">${weekName}</div>
+                                <div class="forecast-emoji">${emoji}</div>
+                                <div class="forecast-range">${minTemp}°/${maxTemp}°</div>
+                            </div>
+                        `;
+                    }
+                    forecastGroup.innerHTML = forecastHtml;
+                } else { throw new Error("forecast short"); }
+            } catch (err) {
+                console.warn("fallback weather");
+                const todayRef = new Date();
+                const getWeek = (offset) => { const d = new Date(todayRef); d.setDate(todayRef.getDate()+offset); return ["周日","周一","周二","周三","周四","周五","周六"][d.getDay()]; };
+                const fallbackForecast = [
+                    { week: getWeek(1), emoji: "🌤️", min: "19", max: "25" },
+                    { week: getWeek(2), emoji: "☁️", min: "18", max: "24" },
+                    { week: getWeek(3), emoji: "🌦️", min: "17", max: "22" }
+                ];
+                let fallHtml = "";
+                fallbackForecast.forEach(f => { fallHtml += `<div class="forecast-day-card"><div class="forecast-week">${f.week}</div><div class="forecast-emoji">${f.emoji}</div><div class="forecast-range">${f.min}°/${f.max}°</div></div>`; });
+                forecastGroup.innerHTML = fallHtml;
+                weatherIconEl.innerText = "☁️";
+                weatherTempEl.innerText = "21°";
+                weatherHumidityEl.innerHTML = "💧 70%";
+                weatherAqiEl.innerHTML = "🌤️ 良";
+            }
+        }
+        fetchShanghaiWeather();
+        setInterval(fetchShanghaiWeather, 3600000);
+        
+        // ======================= 3. 捣蛋线条小人（核心趣味） =======================
+        // 在时钟周围游走，偶尔遮挡数字、拉横幅、翻滚，做简单破坏动作 (绘画风格: 火柴人)
+        const container = document.getElementById("clockContainer");
+        const svgWrapper = document.getElementById("troubleSvgWrapper");
+        let currentActionTimeout = null;
+        let activeSvg = null;
+        
+        // 生成简笔画线条小人 SVG (带各种动作)
+        function createTroubleSVG(actionType = "idle") {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 120 120");
+            svg.classList.add("trouble-svg");
+            // 根据动作调整姿态
+            let headCx = 60, headCy = 25, headR = 12;
+            let bodyPoints = "60,38 60,70";
+            let leftArm = "60,48 45,58";
+            let rightArm = "60,48 75,58";
+            let leftLeg = "60,70 45,88";
+            let rightLeg = "60,70 75,88";
+            let eyeStyle = "👀";  // 使用圆形眼睛
+            let extraProps = "";
+            
+            if (actionType === "push") {
+                // 推时钟动作，手臂前伸
+                leftArm = "60,48 40,55";
+                rightArm = "60,48 80,50";
+                bodyPoints = "60,38 60,68";
+                leftLeg = "60,68 50,85";
+                rightLeg = "60,68 70,85";
+            } else if (actionType === "hang") {
+                // 倒挂
+                headCy = 85; headR = 11;
+                bodyPoints = "60,72 60,40";
+                leftArm = "60,62 45,50";
+                rightArm = "60,62 75,50";
+                leftLeg = "60,40 45,25";
+                rightLeg = "60,40 75,25";
+            } else if (actionType === "climb") {
+                // 攀爬
+                leftArm = "60,48 42,42";
+                rightArm = "60,48 78,45";
+                leftLeg = "60,70 48,60";
+                rightLeg = "60,70 72,58";
+            } else if (actionType === "wiggle") {
+                // 扭动
+                leftArm = "60,48 38,63";
+                rightArm = "60,48 82,53";
+                leftLeg = "60,70 40,92";
+                rightLeg = "60,70 80,88";
+            } else {
+                // idle 得意洋洋
+                leftArm = "60,48 44,58";
+                rightArm = "60,48 76,58";
+            }
+            
+            // 绘制简洁线条 + 逗趣表情
+            const g = document.createElementNS(svgNS, "g");
+            g.setAttribute("stroke", "#2c3e2f");
+            g.setAttribute("stroke-width", "2.5");
+            g.setAttribute("stroke-linecap", "round");
+            g.setAttribute("fill", "none");
+            // 头部圆圈
+            const head = document.createElementNS(svgNS, "circle");
+            head.setAttribute("cx", headCx);
+            head.setAttribute("cy", headCy);
+            head.setAttribute("r", headR);
+            head.setAttribute("fill", "#FFE0A3");
+            head.setAttribute("stroke", "#4a3b1c");
+            g.appendChild(head);
+            // 身体线
+            const bodyLine = document.createElementNS(svgNS, "path");
+            bodyLine.setAttribute("d", `M ${bodyPoints}`);
+            g.appendChild(bodyLine);
+            // 手臂
+            const armL = document.createElementNS(svgNS, "path");
+            armL.setAttribute("d", `M ${leftArm}`);
+            const armR = document.createElementNS(svgNS, "path");
+            armR.setAttribute("d", `M ${rightArm}`);
+            g.appendChild(armL); g.appendChild(armR);
+            // 腿
+            const legL = document.createElementNS(svgNS, "path");
+            legL.setAttribute("d", `M ${leftLeg}`);
+            const legR = document.createElementNS(svgNS, "path");
+            legR.setAttribute("d", `M ${rightLeg}`);
+            g.appendChild(legL); g.appendChild(legR);
+            
+            // 眼睛 俏皮
+            const eyeLeft = document.createElementNS(svgNS, "circle");
+            eyeLeft.setAttribute("cx", headCx-4);
+            eyeLeft.setAttribute("cy", headCy-3);
+            eyeLeft.setAttribute("r", "1.8");
+            eyeLeft.setAttribute("fill", "#000");
+            const eyeRight = document.createElementNS(svgNS, "circle");
+            eyeRight.setAttribute("cx", headCx+4);
+            eyeRight.setAttribute("cy", headCy-3);
+            eyeRight.setAttribute("r", "1.8");
+            eyeRight.setAttribute("fill", "#000");
+            g.appendChild(eyeLeft); g.appendChild(eyeRight);
+            // 捣蛋眉毛 (坏笑)
+            const browL = document.createElementNS(svgNS, "path");
+            browL.setAttribute("d", `M ${headCx-7} ${headCy-7} L ${headCx-2} ${headCy-8}`);
+            browL.setAttribute("stroke", "#4a2e1a");
+            browL.setAttribute("stroke-width", "1.8");
+            const browR = document.createElementNS(svgNS, "path");
+            browR.setAttribute("d", `M ${headCx+7} ${headCy-7} L ${headCx+2} ${headCy-8}`);
+            g.appendChild(browL); g.appendChild(browR);
+            // 嘴巴 搞怪
+            const mouth = document.createElementNS(svgNS, "path");
+            if (actionType === "hang") mouth.setAttribute("d", `M ${headCx-5} ${headCy+3} Q ${headCx} ${headCy+6} ${headCx+5} ${headCy+3}`);
+            else if (actionType === "push") mouth.setAttribute("d", `M ${headCx-5} ${headCy+2} Q ${headCx} ${headCy+7} ${headCx+5} ${headCy+2}`);
+            else mouth.setAttribute("d", `M ${headCx-5} ${headCy+2} Q ${headCx} ${headCy+7} ${headCx+5} ${headCy+2}`);
+            mouth.setAttribute("fill", "none");
+            mouth.setAttribute("stroke", "#a1301a");
+            mouth.setAttribute("stroke-width", "1.8");
+            g.appendChild(mouth);
+            // 加一点腮红
+            const blushL = document.createElementNS(svgNS, "circle");
+            blushL.setAttribute("cx", headCx-9);
+            blushL.setAttribute("cy", headCy+1);
+            blushL.setAttribute("r", "2");
+            blushL.setAttribute("fill", "#ffb3b3");
+            blushL.setAttribute("opacity", "0.6");
+            const blushR = document.createElementNS(svgNS, "circle");
+            blushR.setAttribute("cx", headCx+9);
+            blushR.setAttribute("cy", headCy+1);
+            blushR.setAttribute("r", "2");
+            blushR.setAttribute("fill", "#ffb3b3");
+            blushR.setAttribute("opacity", "0.6");
+            g.appendChild(blushL); g.appendChild(blushR);
+            
+            svg.appendChild(g);
+            // 增加破坏小道具: 偶尔加个小锤子或者涂鸦笔?
+            if (actionType === "push") {
+                const hammer = document.createElementNS(svgNS, "path");
+                hammer.setAttribute("d", "M 82 48 L 92 44 L 90 50 Z");
+                hammer.setAttribute("fill", "#8B5A2B");
+                hammer.setAttribute("stroke", "#4a2e1a");
+                svg.appendChild(hammer);
+            } else if (actionType === "wiggle") {
+                const stars = document.createElementNS(svgNS, "text");
+                stars.setAttribute("x", "95");
+                stars.setAttribute("y", "30");
+                stars.setAttribute("font-size", "12");
+                stars.setAttribute("fill", "#f7b32b");
+                stars.textContent = "⚡";
+                svg.appendChild(stars);
+            }
+            return svg;
+        }
+        
+        function updateTroubleThemeHint() {
+            // 简单呼应背景，将小人描边微调 (跟随主题反差)
+            if (activeSvg) {
+                const lines = activeSvg.querySelectorAll("g");
+                if (lines.length) {
+                    const mainStroke = (curTheme === 1 || curTheme === 3) ? "#f6ecc2" : "#2c3e2f";
+                    lines.forEach(g => {
+                        if (g.getAttribute("stroke") !== "none") g.setAttribute("stroke", mainStroke);
+                    });
+                }
+            }
+        }
+        
+        function clearTroubleAndSchedule() {
+            if (currentActionTimeout) clearTimeout(currentActionTimeout);
+            if (activeSvg && activeSvg.parentNode) activeSvg.parentNode.removeChild(activeSvg);
+        }
+        
+        // 随机捣蛋动作：翻滚、遮挡数字、跳跃、挂时钟
+        function performMischief() {
+            if (!svgWrapper) return;
+            clearTroubleAndSchedule();
+            const actions = ["idle", "push", "hang", "climb", "wiggle"];
+            const randAction = actions[Math.floor(Math.random() * actions.length)];
+            const newSvg = createTroubleSVG(randAction);
+            activeSvg = newSvg;
+            // 随机位置变换 经典偏移
+            const positionClass = ["", "move-left", "move-right", "climb-top"];
+            const randPos = positionClass[Math.floor(Math.random() * positionClass.length)];
+            newSvg.classList.remove("move-left", "move-right", "climb-top");
+            if (randPos) newSvg.classList.add(randPos);
+            // 随机翻转
+            if (Math.random() > 0.7) newSvg.style.transform += " scaleX(-1)";
+            svgWrapper.innerHTML = "";
+            svgWrapper.appendChild(newSvg);
+            updateTroubleThemeHint();
+            
+            // 捣蛋特效: 短暂抖动时钟中的某一个数字块 (轻微视觉破坏)
+            const allDigits = document.querySelectorAll(".digit");
+            if (allDigits.length && Math.random() > 0.5) {
+                const randomDigit = allDigits[Math.floor(Math.random() * allDigits.length)];
+                randomDigit.style.transition = "transform 0.1s";
+                randomDigit.style.transform = "rotate(1deg) scale(0.98)";
+                setTimeout(() => { if(randomDigit) randomDigit.style.transform = ""; }, 200);
+                setTimeout(() => { if(randomDigit) randomDigit.style.transition = ""; }, 300);
+            }
+            // 偶尔冒泡文字
+            if (Math.random() > 0.6) {
+                const bubble = document.createElement("div");
+                bubble.innerText = "🤪 叮！";
+                bubble.style.position = "absolute";
+                bubble.style.bottom = "80px";
+                bubble.style.right = "50px";
+                bubble.style.fontSize = "18px";
+                bubble.style.fontWeight = "bold";
+                bubble.style.background = "rgba(255,240,170,0.9)";
+                bubble.style.padding = "4px 10px";
+                bubble.style.borderRadius = "30px";
+                bubble.style.pointerEvents = "none";
+                bubble.style.zIndex = "35";
+                bubble.style.whiteSpace = "nowrap";
+                svgWrapper.appendChild(bubble);
+                setTimeout(() => bubble.remove(), 800);
+            }
+            // 下次捣蛋5~12秒后再次出现
+            currentActionTimeout = setTimeout(() => {
+                performMischief();
+            }, Math.random() * 7000 + 5000);
+        }
+        
+        // 启动捣蛋循环，初始2秒后出现
+        setTimeout(() => {
+            performMischief();
+        }, 2000);
+        
+        // 保证随时清理和重新调度
+        window.addEventListener("resize", () => {});
+    </script>
+</body>
+</html>
