@@ -19,21 +19,20 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 .theme3 .colon{color:#fff}
 .clock{display:flex;align-items:center;gap:16px}
 .digit-group{display:flex;gap:10px}
-.digit{width:130px;height:200px;background:#fff;border-radius:10px;margin:0 4px;position:relative;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.2);transition:background .3s}
+.digit{width:130px;height:200px;background:#fff;border-radius:10px;margin:0 4px;position:relative;overflow:hhidden;box-shadow:0 3px 8px rgba(0,0,0,0.2);transition:background .3s}
 .digit::before{content:"";position:absolute;top:50%;left:0;right:0;height:2px;background:#eee;z-index:2;transition:background .3s}
 .num{width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:140px;color:#333;transition:transform .3s ease,color .3s}
 .colon{font-size:150px;color:#333;margin:0 8px;display:inline-block;transition:color .3s}
 .btn{position:fixed;bottom:30px;padding:10px 22px;border:none;border-radius:8px;background:#333;color:#fff;font-size:16px;cursor:pointer;z-index:10}
 .btn:active{opacity:.8}
 
-/* 天气卡片 - 与时钟风格深度融合 */
+/* 天气卡片 - 与时钟风格深度融合，移除backdrop-filter兼容iOS10 */
 .weather-card {
     position: fixed;
     top: 24px;
     right: 24px;
     z-index: 25;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(14px);
+    background: rgba(0, 0, 0, 0.65);
     border-radius: 32px;
     padding: 12px 20px;
     font-family: Helvetica, Arial, sans-serif;
@@ -45,24 +44,22 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 }
 
 .theme0 .weather-card {
-    background: rgba(245, 215, 170, 0.7);
-    backdrop-filter: blur(12px);
+    background: rgba(245, 215, 170, 0.85);
     border-color: rgba(100, 70, 30, 0.25);
     color: #4a2c10;
 }
 .theme1 .weather-card {
-    background: rgba(35, 35, 45, 0.8);
+    background: rgba(35, 35, 45, 0.85);
     border-color: rgba(255,255,255,0.2);
     color: #f0f0f0;
 }
 .theme2 .weather-card {
-    background: rgba(235, 235, 240, 0.75);
-    backdrop-filter: blur(12px);
+    background: rgba(235, 235, 240, 0.85);
     border-color: rgba(0,0,0,0.1);
     color: #1e1e2a;
 }
 .theme3 .weather-card {
-    background: rgba(20, 35, 55, 0.8);
+    background: rgba(20, 35, 55, 0.85);
     border-color: rgba(255,255,255,0.2);
     color: #eef4ff;
 }
@@ -93,7 +90,7 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     display: flex;
     gap: 16px;
     font-size: 14px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.2);
     padding: 5px 14px;
     border-radius: 40px;
     font-weight: 500;
@@ -113,10 +110,9 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 .forecast-day-card {
     text-align: center;
     min-width: 68px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.12);
     border-radius: 28px;
     padding: 6px 8px;
-    backdrop-filter: blur(4px);
     transition: all 0.2s;
 }
 .forecast-week {
@@ -134,7 +130,13 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     opacity: 0.9;
 }
 
+/* iPad适配 */
 @media (max-width: 1024px) {
+    .digit{width:100px;height:150px}
+    .num{font-size:105px}
+    .colon{font-size:120px}
+    .clock{gap:8px}
+    .digit-group{gap:6px}
     .weather-card { top: 16px; right: 16px; padding: 10px 16px; min-width: 200px; }
     .weather-icon { font-size: 32px; }
     .temp-unit { font-size: 28px; }
@@ -144,6 +146,11 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     .forecast-emoji { font-size: 20px; }
 }
 @media (max-width: 780px) {
+    .digit{width:70px;height:105px}
+    .num{font-size:70px}
+    .colon{font-size:80px}
+    .clock{gap:5px}
+    .digit-group{gap:4px}
     .weather-card { top: 12px; right: 12px; padding: 8px 14px; min-width: 180px; }
     .weather-icon { font-size: 28px; }
     .temp-unit { font-size: 24px; }
@@ -185,76 +192,85 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 </div>
 
 <script>
-    // ========== 翻页时钟逻辑（保留完整，增加每小时时间同步校准）==========
-    const themes=["theme0","theme1","theme2","theme3"];
-    let cur=0;
-    const btn=document.getElementById("themeBtn");
-    btn.onclick=()=>{
-        cur=(cur+1)%themes.length;
-        document.body.className=themes[cur];
+(function(){
+    // iOS 10兼容性处理：确保requestAnimationFrame存在
+    if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame = function(cb) { setTimeout(cb, 16); };
+    }
+    
+    // ========== 翻页时钟逻辑 ==========
+    var themes = ["theme0","theme1","theme2","theme3"];
+    var cur = 0;
+    var btn = document.getElementById("themeBtn");
+    btn.onclick = function(){
+        cur = (cur + 1) % themes.length;
+        document.body.className = themes[cur];
     };
-    function pad(n){return n<10?"0"+n:""+n;}
-    function flip(el,newVal){
-        if(el.textContent===newVal) return;
-        el.style.transform="rotateX(-90deg)";
-        setTimeout(()=>{
-            el.textContent=newVal;
-            el.style.transform="rotateX(0deg)";
-        },150);
+    
+    function pad(n){
+        return n < 10 ? "0" + n : "" + n;
     }
     
-    // 时钟更新函数（基于当前系统时间）
-    function updateClock() {
-        const d=new Date();
-        const h=pad(d.getHours()), m=pad(d.getMinutes()), s=pad(d.getSeconds());
-        flip(document.getElementById("h1"),h[0]);
-        flip(document.getElementById("h2"),h[1]);
-        flip(document.getElementById("m1"),m[0]);
-        flip(document.getElementById("m2"),m[1]);
-        flip(document.getElementById("s1"),s[0]);
-        flip(document.getElementById("s2"),s[1]);
+    function flip(el, newVal){
+        if(el.textContent === newVal) return;
+        el.style.transform = "rotateX(-90deg)";
+        setTimeout(function(){
+            el.textContent = newVal;
+            el.style.transform = "rotateX(0deg)";
+        }, 150);
     }
     
-    // 启动时钟：每秒更新
+    function updateClock(){
+        var d = new Date();
+        var h = pad(d.getHours());
+        var m = pad(d.getMinutes());
+        var s = pad(d.getSeconds());
+        flip(document.getElementById("h1"), h[0]);
+        flip(document.getElementById("h2"), h[1]);
+        flip(document.getElementById("m1"), m[0]);
+        flip(document.getElementById("m2"), m[1]);
+        flip(document.getElementById("s1"), s[0]);
+        flip(document.getElementById("s2"), s[1]);
+    }
+    
     updateClock();
-    const clockInterval = setInterval(updateClock, 1000);
+    setInterval(updateClock, 1000);
     
-    // 每小时整点同步一次时间（防止setInterval累积误差，重新校准显示）
-    // 方法：每小时重新从系统获取时间强制刷新一次当前显示，消除任何潜在偏差
-    setInterval(() => {
-        // 强制重新读取系统时间并立即更新所有数字（无动画偏差修正）
-        const now = new Date();
-        const hh = pad(now.getHours());
-        const mm = pad(now.getMinutes());
-        const ss = pad(now.getSeconds());
-        const h1El = document.getElementById("h1");
-        const h2El = document.getElementById("h2");
-        const m1El = document.getElementById("m1");
-        const m2El = document.getElementById("m2");
-        const s1El = document.getElementById("s1");
-        const s2El = document.getElementById("s2");
-        // 直接修正文本（不加翻转动画，保持同步干净）
-        if (h1El.textContent !== hh[0]) h1El.textContent = hh[0];
-        if (h2El.textContent !== hh[1]) h2El.textContent = hh[1];
-        if (m1El.textContent !== mm[0]) m1El.textContent = mm[0];
-        if (m2El.textContent !== mm[1]) m2El.textContent = mm[1];
-        if (s1El.textContent !== ss[0]) s1El.textContent = ss[0];
-        if (s2El.textContent !== ss[1]) s2El.textContent = ss[1];
-        // 同时矫正transform状态，避免卡在翻转中
-        const allNums = [h1El, h2El, m1El, m2El, s1El, s2El];
-        allNums.forEach(el => { if (el.style.transform === "rotateX(-90deg)") el.style.transform = "rotateX(0deg)"; });
-    }, 3600000); // 每小时整点校准一次
+    // 每小时整点校准
+    setInterval(function(){
+        var now = new Date();
+        var hh = pad(now.getHours());
+        var mm = pad(now.getMinutes());
+        var ss = pad(now.getSeconds());
+        var h1El = document.getElementById("h1");
+        var h2El = document.getElementById("h2");
+        var m1El = document.getElementById("m1");
+        var m2El = document.getElementById("m2");
+        var s1El = document.getElementById("s1");
+        var s2El = document.getElementById("s2");
+        if(h1El.textContent !== hh[0]) h1El.textContent = hh[0];
+        if(h2El.textContent !== hh[1]) h2El.textContent = hh[1];
+        if(m1El.textContent !== mm[0]) m1El.textContent = mm[0];
+        if(m2El.textContent !== mm[1]) m2El.textContent = mm[1];
+        if(s1El.textContent !== ss[0]) s1El.textContent = ss[0];
+        if(s2El.textContent !== ss[1]) s2El.textContent = ss[1];
+        var allNums = [h1El, h2El, m1El, m2El, s1El, s2El];
+        for(var i=0;i<allNums.length;i++){
+            if(allNums[i].style.transform === "rotateX(-90deg)") 
+                allNums[i].style.transform = "rotateX(0deg)";
+        }
+    }, 3600000);
     
-    // ========== 天气模块: Open-Meteo API (未来5天，包含周六) ==========
-    const weatherIconEl = document.getElementById("weatherIcon");
-    const weatherTempEl = document.getElementById("weatherTemp");
-    const weatherHumidityEl = document.getElementById("weatherHumidity");
-    const weatherAqiEl = document.getElementById("weatherAqi");
-    const forecastGroup = document.getElementById("forecastGroup");
+    // ========== 天气模块 (不使用fetch，改用XMLHttpRequest兼容iOS10) ==========
+    var weatherIconEl = document.getElementById("weatherIcon");
+    var weatherTempEl = document.getElementById("weatherTemp");
+    var weatherHumidityEl = document.getElementById("weatherHumidity");
+    var weatherAqiEl = document.getElementById("weatherAqi");
+    var forecastGroup = document.getElementById("forecastGroup");
     
     // WMO 天气代码映射
-    function wmoToEmoji(code) {
-        const map = {
+    function wmoToEmoji(code){
+        var map = {
             0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
             51: "🌦️", 53: "🌧️", 55: "🌧️", 56: "🌧️", 57: "🌧️",
             61: "🌧️", 63: "🌧️", 65: "🌧️", 66: "🌧️", 67: "🌧️",
@@ -265,124 +281,157 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         return map[code] || "🌡️";
     }
     
-    // 根据AQI数值返回图标和文字 (优、良、轻度污染、中度污染、重度污染)
-    function getAqiInfo(aqi) {
-        if (aqi <= 50) return { icon: "🌱", text: "优" };
-        if (aqi <= 100) return { icon: "🌤️", text: "良" };
-        if (aqi <= 150) return { icon: "⚠️", text: "轻度" };
-        if (aqi <= 200) return { icon: "⚡", text: "中度" };
-        if (aqi <= 300) return { icon: "🚨", text: "重度" };
+    function getAqiInfo(aqi){
+        if(aqi <= 50) return { icon: "🌱", text: "优" };
+        if(aqi <= 100) return { icon: "🌤️", text: "良" };
+        if(aqi <= 150) return { icon: "⚠️", text: "轻度" };
+        if(aqi <= 200) return { icon: "⚡", text: "中度" };
+        if(aqi <= 300) return { icon: "🚨", text: "重度" };
         return { icon: "💀", text: "严重" };
     }
     
-    function getWeekdayShortFromOffset(offsetDays) {
-        const d = new Date();
+    function getWeekdayShortFromOffset(offsetDays){
+        var d = new Date();
         d.setDate(d.getDate() + offsetDays);
-        const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+        var weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
         return weekdays[d.getDay()];
     }
     
-    async function fetchShanghaiWeather() {
-        try {
-            // 获取未来5天天气预报 (温度+湿度+天气代码)
-            const forecastUrl = "https://api.open-meteo.com/v1/forecast?latitude=31.2304&longitude=121.4737&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&current_weather=true&timezone=Asia/Shanghai&forecast_days=5";
-            const response = await fetch(forecastUrl);
-            if (!response.ok) throw new Error("weather api failed");
-            const data = await response.json();
-            
-            // 当前天气
-            const current = data.current_weather;
-            const temperature = current.temperature;
-            const weatherCode = current.weathercode;
-            weatherIconEl.innerText = wmoToEmoji(weatherCode);
-            weatherTempEl.innerText = `${Math.round(temperature)}°`;
-            
-            // 湿度
-            if (data.daily && data.daily.relative_humidity_2m_max && data.daily.relative_humidity_2m_max.length > 0) {
-                const humidity = data.daily.relative_humidity_2m_max[0];
-                weatherHumidityEl.innerHTML = `💧 ${humidity}%`;
-            } else {
-                weatherHumidityEl.innerHTML = `💧 --%`;
-            }
-            
-            // 空气质量 (独立API)
-            try {
-                const aqiUrl = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=31.2304&longitude=121.4737&current=european_aqi&timezone=Asia/Shanghai";
-                const aqiResp = await fetch(aqiUrl);
-                if (aqiResp.ok) {
-                    const aqiData = await aqiResp.json();
-                    if (aqiData.current && aqiData.current.european_aqi !== undefined) {
-                        const aqiValue = aqiData.current.european_aqi;
-                        const { icon, text } = getAqiInfo(aqiValue);
-                        weatherAqiEl.innerHTML = `${icon} ${text}`;
-                    } else {
-                        weatherAqiEl.innerHTML = `🌤️ 良`;
-                    }
-                } else {
-                    weatherAqiEl.innerHTML = `🌤️ 良`;
-                }
-            } catch (e) {
-                console.warn("AQI获取失败，使用默认良");
-                weatherAqiEl.innerHTML = `🌤️ 良`;
-            }
-            
-            // 未来三天预报 (明天、后天、第三天，确保周六完整)
-            const daily = data.daily;
-            if (daily && daily.time && daily.time.length >= 4) {
-                let forecastHtml = "";
-                for (let i = 1; i <= 3; i++) {
-                    if (i >= daily.time.length) break;
-                    const maxTemp = Math.round(daily.temperature_2m_max[i]);
-                    const minTemp = Math.round(daily.temperature_2m_min[i]);
-                    const weatherCodeDay = daily.weather_code[i];
-                    const emoji = wmoToEmoji(weatherCodeDay);
-                    const weekName = getWeekdayShortFromOffset(i);
-                    forecastHtml += `
-                        <div class="forecast-day-card">
-                            <div class="forecast-week">${weekName}</div>
-                            <div class="forecast-emoji">${emoji}</div>
-                            <div class="forecast-range">${minTemp}°/${maxTemp}°</div>
-                        </div>
-                    `;
-                }
-                forecastGroup.innerHTML = forecastHtml;
-            } else {
-                throw new Error("forecast data insufficient");
-            }
-        } catch (err) {
-            console.warn("天气获取失败，使用本地降级数据(含周六)", err);
-            // 优雅降级：动态生成未来三天（确保周六不缺失）
-            const todayRef = new Date();
-            const getWeek = (offset) => {
-                const d = new Date(todayRef);
-                d.setDate(todayRef.getDate() + offset);
-                const w = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-                return w[d.getDay()];
-            };
-            const fallbackForecast = [
-                { week: getWeek(1), emoji: "🌤️", min: "19", max: "25" },
-                { week: getWeek(2), emoji: "☁️", min: "18", max: "24" },
-                { week: getWeek(3), emoji: "🌦️", min: "17", max: "22" }
-            ];
-            let fallHtml = "";
-            for (let f of fallbackForecast) {
-                fallHtml += `<div class="forecast-day-card">
-                    <div class="forecast-week">${f.week}</div>
-                    <div class="forecast-emoji">${f.emoji}</div>
-                    <div class="forecast-range">${f.min}°/${f.max}°</div>
-                </div>`;
-            }
-            forecastGroup.innerHTML = fallHtml;
-            weatherIconEl.innerText = "☁️";
-            weatherTempEl.innerText = "22°";
-            weatherHumidityEl.innerHTML = "💧 68%";
-            weatherAqiEl.innerHTML = "🌤️ 良";
-        }
+    function getWeekdayShortFromOffsetForFallback(offsetDays){
+        var d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        var weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+        return weekdays[d.getDay()];
     }
     
-    // 启动天气（立刻 + 每小时刷新）
+    // 使用XMLHttpRequest替代fetch
+    function fetchShanghaiWeather(){
+        var forecastUrl = "https://api.open-meteo.com/v1/forecast?latitude=31.2304&longitude=121.4737&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&current_weather=true&timezone=Asia/Shanghai&forecast_days=5";
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", forecastUrl, true);
+        xhr.timeout = 10000;
+        xhr.onload = function(){
+            if(xhr.status >= 200 && xhr.status < 300){
+                try{
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    // 当前天气
+                    if(data.current_weather){
+                        var current = data.current_weather;
+                        var temperature = current.temperature;
+                        var weatherCode = current.weathercode;
+                        weatherIconEl.innerText = wmoToEmoji(weatherCode);
+                        weatherTempEl.innerText = Math.round(temperature) + "°";
+                    }
+                    
+                    // 湿度
+                    if(data.daily && data.daily.relative_humidity_2m_max && data.daily.relative_humidity_2m_max.length > 0){
+                        var humidity = data.daily.relative_humidity_2m_max[0];
+                        weatherHumidityEl.innerHTML = "💧 " + humidity + "%";
+                    } else {
+                        weatherHumidityEl.innerHTML = "💧 --%";
+                    }
+                    
+                    // 空气质量API (独立XMLHttpRequest)
+                    var aqiUrl = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=31.2304&longitude=121.4737&current=european_aqi&timezone=Asia/Shanghai";
+                    var aqiXhr = new XMLHttpRequest();
+                    aqiXhr.open("GET", aqiUrl, true);
+                    aqiXhr.timeout = 8000;
+                    aqiXhr.onload = function(){
+                        if(aqiXhr.status >= 200 && aqiXhr.status < 300){
+                            try{
+                                var aqiData = JSON.parse(aqiXhr.responseText);
+                                if(aqiData.current && aqiData.current.european_aqi !== undefined){
+                                    var aqiValue = aqiData.current.european_aqi;
+                                    var aqiInfo = getAqiInfo(aqiValue);
+                                    weatherAqiEl.innerHTML = aqiInfo.icon + " " + aqiInfo.text;
+                                } else {
+                                    weatherAqiEl.innerHTML = "🌤️ 良";
+                                }
+                            } catch(e){
+                                weatherAqiEl.innerHTML = "🌤️ 良";
+                            }
+                        } else {
+                            weatherAqiEl.innerHTML = "🌤️ 良";
+                        }
+                    };
+                    aqiXhr.onerror = function(){
+                        weatherAqiEl.innerHTML = "🌤️ 良";
+                    };
+                    aqiXhr.send();
+                    
+                    // 未来三天预报
+                    var daily = data.daily;
+                    if(daily && daily.time && daily.time.length >= 4){
+                        var forecastHtml = "";
+                        for(var i = 1; i <= 3; i++){
+                            if(i >= daily.time.length) break;
+                            var maxTemp = Math.round(daily.temperature_2m_max[i]);
+                            var minTemp = Math.round(daily.temperature_2m_min[i]);
+                            var weatherCodeDay = daily.weather_code[i];
+                            var emoji = wmoToEmoji(weatherCodeDay);
+                            var weekName = getWeekdayShortFromOffset(i);
+                            forecastHtml += '<div class="forecast-day-card">' +
+                                '<div class="forecast-week">' + weekName + '</div>' +
+                                '<div class="forecast-emoji">' + emoji + '</div>' +
+                                '<div class="forecast-range">' + minTemp + "°/" + maxTemp + "°</div>" +
+                                '</div>';
+                        }
+                        forecastGroup.innerHTML = forecastHtml;
+                    } else {
+                        useFallbackWeather();
+                    }
+                } catch(e){
+                    useFallbackWeather();
+                }
+            } else {
+                useFallbackWeather();
+            }
+        };
+        xhr.onerror = function(){
+            useFallbackWeather();
+        };
+        xhr.ontimeout = function(){
+            useFallbackWeather();
+        };
+        xhr.send();
+    }
+    
+    function useFallbackWeather(){
+        var todayRef = new Date();
+        function getWeek(offset){
+            var d = new Date(todayRef);
+            d.setDate(todayRef.getDate() + offset);
+            var w = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+            return w[d.getDay()];
+        }
+        var fallbackForecast = [
+            { week: getWeek(1), emoji: "🌤️", min: "19", max: "25" },
+            { week: getWeek(2), emoji: "☁️", min: "18", max: "24" },
+            { week: getWeek(3), emoji: "🌦️", min: "17", max: "22" }
+        ];
+        var fallHtml = "";
+        for(var f=0; f<fallbackForecast.length; f++){
+            fallHtml += '<div class="forecast-day-card">' +
+                '<div class="forecast-week">' + fallbackForecast[f].week + '</div>' +
+                '<div class="forecast-emoji">' + fallbackForecast[f].emoji + '</div>' +
+                '<div class="forecast-range">' + fallbackForecast[f].min + "°/" + fallbackForecast[f].max + "°</div>" +
+                '</div>';
+        }
+        forecastGroup.innerHTML = fallHtml;
+        weatherIconEl.innerText = "☁️";
+        weatherTempEl.innerText = "22°";
+        weatherHumidityEl.innerHTML = "💧 68%";
+        weatherAqiEl.innerHTML = "🌤️ 良";
+    }
+    
+    // 启动天气
     fetchShanghaiWeather();
     setInterval(fetchShanghaiWeather, 3600000);
-    window.addEventListener("online", () => { fetchShanghaiWeather(); });
+    
+    // 检测网络变化 (iOS10 不支持 online/offline? 部分支持，安全添加)
+    window.addEventListener("online", function(){ fetchShanghaiWeather(); });
+})();
 </script>
 </body></html>
