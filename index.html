@@ -133,19 +133,19 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 /* ========== GIF 素材区域 ========== */
 .gif-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 30%;
+    top: 18px;
+    left: 15px;
+    width: 20%;
     max-width: 360px;
     min-width: 180px;
     z-index: 20;
     pointer-events: none;  /* 避免遮挡点击 */
     opacity: 0.85;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.5s ease;
 }
 
 .gif-container img {
-    width: 100%;
+    width: 87%;
     height: auto;
     display: block;
 }
@@ -175,19 +175,19 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 @media (max-width: 1024px) {
     /* 天气卡片调整（保持原有比例） */
     .weather-card { top: 16px; right: 16px; padding: 14px 20px; min-width: 235px; border-radius: 32px; }
-    .weather-icon { font-size: 38px; }
-    .temp-unit { font-size: 32px; }
-    .weather-meta { gap: 18px; font-size: 16px; padding: 8px 16px; border-radius: 40px; }
-    .forecast-group { gap: 18px; }
+    .weather-icon { font-size: 60px; }
+    .temp-unit { font-size: 60px; }
+    .weather-meta { gap: 25px; font-size: 30px; padding: 8px 16px; border-radius: 40px; }
+    .forecast-group { gap: 15px; }
     .forecast-day-card { min-width: 70px; padding: 8px 10px; border-radius: 30px; }
-    .forecast-week { font-size: 15px; }
-    .forecast-emoji { font-size: 25px; }
-    .forecast-range { font-size: 14px; }
+    .forecast-week { font-size: 18px; }
+    .forecast-emoji { font-size: 28px; }
+    .forecast-range { font-size: 23px; }
     .weather-now { gap: 20px; margin-bottom: 12px; }
     
     /* 时钟重新调整：总宽度控制在 990px 以内，左右自然留白约 17px (1024-990=34/2) */
     .clock {
-        gap: 10px;           /* 时钟内各元素之间间隙 */
+        gap: 5px;           /* 时钟内各元素之间间隙 */
     }
     .digit-group {
         gap: 6px;            /* 每组内两个数字块间隙 */
