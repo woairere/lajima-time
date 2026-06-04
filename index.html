@@ -23,8 +23,37 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 .digit::before{content:"";position:absolute;top:50%;left:0;right:0;height:2px;background:#eee;z-index:2;transition:background .3s}
 .num{width:100%;height:100%;display:flex;justify-content:center;align-items:center;font-size:140px;color:#333;transition:transform .3s ease,color .3s}
 .colon{font-size:150px;color:#333;margin:0 8px;display:inline-block;transition:color .3s}
-.btn{position:fixed;bottom:30px;padding:10px 22px;border:none;border-radius:8px;background:#333;color:#fff;font-size:16px;cursor:pointer;z-index:10}
-.btn:active{opacity:.8}
+
+/* 底部双按钮容器 */
+.button-group {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 30;
+}
+
+/* 按钮基础样式（移除独立fixed，共用风格） */
+.btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    backdrop-filter: blur(2px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.btn:active {
+    opacity: 0.8;
+    transform: scale(0.96);
+}
 
 /* 天气卡片 - 整体放大5px基准尺寸 (内边距、字体、圆角、间距都基于5px增量) */
 .weather-card {
@@ -142,7 +171,7 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     z-index: 20;
     pointer-events: none;
     opacity: 0.85;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s ease, display 0.2s;
 }
 
 .gif-container img {
@@ -164,8 +193,34 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     filter: brightness(0.9) contrast(1.2);
 }
 
-.gif-container:hover {
-    opacity: 1;
+/* ========== 主题配色针对按钮的特殊风格（匹配各主题） ========== */
+.theme0 .btn {
+    background: #8B5A2B;
+    color: #FFF4E0;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+.theme1 .btn {
+    background: #555;
+    color: #f0f0f0;
+    border: 1px solid #777;
+}
+.theme2 .btn {
+    background: #2c2c2c;
+    color: #fff;
+}
+.theme3 .btn {
+    background: #D9E2F0;
+    color: #192841;
+    border: 1px solid rgba(25,40,65,0.3);
+}
+.theme4 .btn {
+    background: #2C2C3A;
+    color: #FFE1A0;
+    border: 1px solid rgba(255,230,160,0.3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.theme4 .btn:active {
+    background: #3d3d50;
 }
 
 /* ========== iPad 横屏 (1024x768) 专门优化 ========== */
@@ -206,6 +261,14 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         max-width: 300px;
         min-width: 150px;
     }
+    .button-group {
+        bottom: 25px;
+        gap: 18px;
+    }
+    .btn {
+        padding: 9px 20px;
+        font-size: 15px;
+    }
 }
 
 @media (max-width: 780px) {
@@ -243,6 +306,14 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         max-width: 220px;
         min-width: 120px;
     }
+    .button-group {
+        bottom: 20px;
+        gap: 15px;
+    }
+    .btn {
+        padding: 8px 18px;
+        font-size: 14px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -251,9 +322,17 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         width: 40%;
         max-width: 180px;
     }
+    .button-group {
+        bottom: 18px;
+        gap: 14px;
+    }
+    .btn {
+        padding: 7px 16px;
+        font-size: 13px;
+    }
 }
 
-/* ========== 近视眼友好配色 (theme4) ========== */
+/* ========== 近视眼友好配色 (theme4) 完整适配 ========== */
 .theme4 {
     background: #1A1A24;
 }
@@ -301,18 +380,9 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     font-weight: 500;
     letter-spacing: 0.3px;
 }
-.theme4 .btn {
-    background: #2C2C3A;
-    color: #FFE1A0;
-    border: 1px solid rgba(255,230,160,0.3);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-.theme4 .btn:active {
-    background: #3d3d50;
-}
 </style></head>
 <body class="theme0">
-<div class="gif-container">
+<div class="gif-container" id="gifContainer">
     <img src="./human.gif" alt="human animation" onerror="this.style.opacity='0.3'">
 </div>
 
@@ -323,7 +393,12 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     <span class="colon">:</span>
     <div class="digit-group"><div class="digit"><div class="num" id="s1">0</div></div><div class="digit"><div class="num" id="s2">0</div></div></div>
 </div>
-<button class="btn" id="themeBtn">切换配色</button>
+
+<!-- 双按钮容器：切换配色 + 隐藏/显示GIF -->
+<div class="button-group">
+    <button class="btn" id="themeBtn">切换配色</button>
+    <button class="btn" id="toggleGifBtn">隐藏 GIF</button>
+</div>
 
 <div class="weather-card" id="weatherCard">
     <div class="weather-now">
@@ -342,11 +417,11 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 </div>
 
 <script>
-    // ========== 翻页时钟逻辑 ==========
+    // ========== 1. 翻页时钟逻辑 ==========
     var themes=["theme0","theme1","theme2","theme3","theme4"];
     var cur=0;
-    var btn=document.getElementById("themeBtn");
-    btn.onclick=function(){
+    var themeBtn=document.getElementById("themeBtn");
+    themeBtn.onclick=function(){
         cur=(cur+1)%themes.length;
         document.body.className=themes[cur];
     };
@@ -403,7 +478,59 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         }
     }, 3600000);
     
-    // ========== 天气模块 (上海市黄浦区 丽园路附近精确坐标: 31.2127, 121.4767) ==========
+    // ========== 2. GIF 显示/隐藏 功能 + localStorage记忆 ==========
+    var gifContainer = document.getElementById("gifContainer");
+    var toggleGifBtn = document.getElementById("toggleGifBtn");
+    
+    // 读取存储状态 (是否隐藏)
+    function getGifHiddenState() {
+        try {
+            var stored = localStorage.getItem("gifHidden");
+            if (stored === "true") return true;
+            if (stored === "false") return false;
+            return false; // 默认显示
+        } catch(e) {
+            return false;
+        }
+    }
+    
+    function setGifHiddenState(isHidden) {
+        try {
+            localStorage.setItem("gifHidden", isHidden ? "true" : "false");
+        } catch(e) {}
+    }
+    
+    function applyGifVisibility(isHidden) {
+        if (!gifContainer) return;
+        if (isHidden) {
+            gifContainer.style.display = "none";
+            toggleGifBtn.textContent = "显示 GIF";
+        } else {
+            gifContainer.style.display = "";
+            toggleGifBtn.textContent = "隐藏 GIF";
+        }
+    }
+    
+    function toggleGif() {
+        var currentlyHidden = (gifContainer.style.display === "none");
+        var newHiddenState = !currentlyHidden;
+        applyGifVisibility(newHiddenState);
+        setGifHiddenState(newHiddenState);
+    }
+    
+    // 初始化GIF显示状态 (基于localStorage)
+    var initialHidden = getGifHiddenState();
+    applyGifVisibility(initialHidden);
+    
+    // 绑定toggle按钮事件
+    if (toggleGifBtn) {
+        toggleGifBtn.onclick = function(e) {
+            e.preventDefault();
+            toggleGif();
+        };
+    }
+    
+    // ========== 3. 天气模块 (上海市黄浦区 丽园路附近精确坐标: 31.2127, 121.4767) ==========
     var weatherIconEl = document.getElementById("weatherIcon");
     var weatherTempEl = document.getElementById("weatherTemp");
     var weatherHumidityEl = document.getElementById("weatherHumidity");
@@ -510,7 +637,7 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
             // 显示今日 + 未来三天 (总共最多4天)
             if (daily && daily.time && daily.time.length >= 4) {
                 var forecastHtml = "";
-                // 1. 添加今日卡片 (索引0)
+                // 今日卡片 (索引0)
                 var todayMax = Math.round(daily.temperature_2m_max[0]);
                 var todayMin = Math.round(daily.temperature_2m_min[0]);
                 var todayCode = daily.weather_code[0];
@@ -521,7 +648,7 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
                     '<div class="forecast-range">' + todayMin + "°/" + todayMax + "°</div>" +
                     '</div>';
                 
-                // 2. 未来三天 (索引1,2,3)
+                // 未来三天 (索引1,2,3)
                 var maxDays = Math.min(3, daily.time.length - 1);
                 for (var i = 1; i <= maxDays; i++) {
                     var maxTemp = Math.round(daily.temperature_2m_max[i]);
@@ -601,6 +728,20 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
             nums[i].style.webkitTransform = 'rotateX(0deg)';
         }
         updateClock();
+        
+        // 确保GIF状态在页面完全加载后与存储状态完全匹配 (再次保证防止闪烁)
+        var storedHide = getGifHiddenState();
+        if (storedHide) {
+            if (gifContainer.style.display !== "none") {
+                gifContainer.style.display = "none";
+                toggleGifBtn.textContent = "显示 GIF";
+            }
+        } else {
+            if (gifContainer.style.display === "none") {
+                gifContainer.style.display = "";
+                toggleGifBtn.textContent = "隐藏 GIF";
+            }
+        }
     });
 </script>
 </body></html>
