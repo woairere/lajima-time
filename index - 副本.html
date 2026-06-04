@@ -130,47 +130,6 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
     opacity: 0.9;
 }
 
-/* ========== GIF 素材区域 ========== */
-.gif-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 30%;
-    max-width: 360px;
-    min-width: 180px;
-    z-index: 20;
-    pointer-events: none;  /* 避免遮挡点击 */
-    opacity: 0.85;
-    transition: opacity 0.3s ease;
-}
-
-.gif-container img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-/* ========== 主题适配：针对黑色线条素材进行滤色 ========== */
-/* 默认浅色主题 (theme0) 直接展示 */
-.theme0 .gif-container img {
-    filter: brightness(0.95) contrast(1.1);
-}
-/* 深色主题 (theme1, theme3, theme4) 反转颜色，使黑色线条变亮 */
-.theme1 .gif-container img,
-.theme3 .gif-container img,
-.theme4 .gif-container img {
-    filter: invert(1) brightness(1.2);
-}
-/* 浅灰主题 (theme2) 适当增加对比度 */
-.theme2 .gif-container img {
-    filter: brightness(0.9) contrast(1.2);
-}
-
-/* 可选：悬停时增加透明度，不影响时钟操作 */
-.gif-container:hover {
-    opacity: 1;
-}
-
 /* ========== iPad 横屏 (1024x768) 专门优化：时钟左右留白约16px，数字放大拉长，不超出屏幕 ========== */
 @media (max-width: 1024px) {
     /* 天气卡片调整（保持原有比例） */
@@ -206,12 +165,6 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         font-size: 140px;    /* 冒号尺寸协调 */
         margin: 0 5px;       /* 左右留白减少，节省宽度 */
     }
-    /* GIF 容器缩放适配 */
-    .gif-container {
-        width: 25%;
-        max-width: 300px;
-        min-width: 150px;
-    }
 }
 
 /* 780px 及以下（iPad竖屏/小屏）保持适中，不溢出 */
@@ -245,21 +198,11 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
         font-size: 108px;
         margin: 0 3px;
     }
-    /* 小屏下 GIF 适当缩小 */
-    .gif-container {
-        width: 35%;
-        max-width: 220px;
-        min-width: 120px;
-    }
 }
 
 /* 手机宽度隐藏天气卡片 */
 @media (max-width: 640px) {
     .weather-card { display: none; }
-    .gif-container {
-        width: 40%;
-        max-width: 180px;
-    }
 }
 
 /* ========== 近视眼友好配色 (theme4) ========== */
@@ -321,11 +264,6 @@ html,body{width:100%;height:100%;overflow:hidden;display:flex;justify-content:ce
 }
 </style></head>
 <body class="theme0">
-<!-- GIF 素材区域：固定左上角，根据主题自动调整滤色 -->
-<div class="gif-container">
-    <img src="./human.gif" alt="human animation" onerror="this.style.opacity='0.3'">
-</div>
-
 <div class="clock">
     <div class="digit-group"><div class="digit"><div class="num" id="h1">0</div></div><div class="digit"><div class="num" id="h2">0</div></div></div>
     <span class="colon">:</span>
